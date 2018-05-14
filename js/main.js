@@ -443,11 +443,17 @@ Account = nebulas.Account,
 neb = new nebulas.Neb();
 neb.setRequest(new nebulas.HttpRequest("https://mainnet.nebulas.io"));
 
+var api = neb.api;
+
 var NebPay = require("nebpay");     //https://github.com/nebulasio/nebPay
 var nebPay = new NebPay();
 var serialNumber
 function pay()
 {
+	$('#hint').text("等待支付结果");
+	$('#ok').attr("disabled",true);
+	$('#cancel').attr("disabled",true);
+	
 	var to = dappAddress;
 	var value = 0.0001;
 	var callFunction = "continueGame"
@@ -459,27 +465,37 @@ function pay()
 }
 
 var intervalQuery
-function funcIntervalQuery() {
+function funcIntervalQuery(txhash) {
 	console.log("funcIntervalQuery");
-	nebPay.queryPayInfo(serialNumber)   //search transaction result from server (result upload to server by app)
-		.then(function (resp) {
-			console.log("tx result +++: " + resp)   //resp is a JSON string
-			var respObject = JSON.parse(resp)
-			if(respObject.code === 0){
-				continueGame();
-				clearInterval(intervalQuery)
-			}
-		})
-		.catch(function (err) {
-			console.log(">>>:" + err);
-		});
+	api.getTransactionReceipt({hash: txhash}).then(function(receipt) {
+		console.log("tx result +++: " + JSON.stringify(receipt));
+		if (receipt.status == 1)
+		{
+			continueGame();
+		}
+		else if (receipt.status == 0)
+		{
+			$('#hint').text("是否花费0.0001NAS继续游戏？");
+			$('#ok').attr("disabled",false);
+			$('#cancel').attr("disabled",false);			
+		}
+			
+	});	
 }	
 
 // 支付结果
 function onPay(resp) {
 	console.log("response of pay ---: " + JSON.stringify(resp));
+	if (resp.txhash == undefined)
+	{
+		$('#hint').text("是否花费0.0001NAS继续游戏？");
+		$('#ok').attr("disabled",false);
+		$('#cancel').attr("disabled",false);		
+		return;
+	}
+	
     intervalQuery = setInterval(function () {
-            funcIntervalQuery();
+            funcIntervalQuery(resp.txhash);
     }, 10000);
 }
 
