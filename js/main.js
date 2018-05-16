@@ -18,6 +18,33 @@ var planscore=document.getElementById("planscore");
     //初始化分数
 var scores=0; 
 
+var addHandler = function(e, type, handler){
+	if (e.addEventListener){
+		e.addEventListener(type, handler, true);
+	} else if (e.attachEvent){
+		e.attachEvent("on" + type, handler);
+	} else {
+		e["on" + type] = handler;
+	}
+}
+
+var removeHandler = function(e, type, handler){
+	if (e.removeEventListener){
+		e.removeEventListener(type, handler, true);
+	} else if (e.detachEvent){
+		e.detachEvent("on" + type, handler);
+	} else {
+		e["on" + type] = handler;
+	}
+}
+
+var u = navigator.userAgent;
+var isAndroid = u.indexOf('Android') > -1 || u.indexOf('Adr') > -1; 
+var isiOS = !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/); //ios终端
+
+var moveEventName = isAndroid || isiOS ? 'touchmove' : 'mousemove';
+console.log("moveEventName:" + moveEventName);
+
 /*
  创建飞机类
  */
@@ -141,27 +168,15 @@ var number=0;
 var pauseGame=function(){
     if(number==0){
         suspenddiv.style.display="block";
-        if(document.removeEventListener){
-            mainDiv.removeEventListener("mousemove",onMouseMove,true);
-            bodyobj.removeEventListener("mousemove",onOutSide,true);
-        }
-        else if(document.detachEvent){
-            mainDiv.detachEvent("onmousemove",onMouseMove);
-            bodyobj.detachEvent("onmousemove",onOutSide);
-        }
+        removeHandler(mainDiv, moveEventName, onMouseMove);
+        removeHandler(bodyobj, moveEventName, onOutSide);
         clearInterval(set);
         number=1;
     }
     else{
         suspenddiv.style.display="none";
-        if(document.addEventListener){
-            mainDiv.addEventListener("mousemove",onMouseMove,true);
-            bodyobj.addEventListener("mousemove",onOutSide,true);
-        }
-        else if(document.attachEvent){
-            mainDiv.attachEvent("onmousemove",onMouseMove);
-            bodyobj.attachEvent("onmousemove",onOutSide);
-        }
+        addHandler(mainDiv, moveEventName, onMouseMove);
+        addHandler(bodyobj, moveEventName, onOutSide);
         set=setInterval(start,20);
         number=0;
     }
@@ -196,25 +211,20 @@ var bodyobj=document.getElementsByTagName("body")[0];
 */
 function initListeners()
 {
+	addHandler(mainDiv, moveEventName, onMouseMove);
+	addHandler(bodyobj, moveEventName, onOutSide);
+	
 	if(document.addEventListener){
-		//为本方飞机添加移动和暂停
-		mainDiv.addEventListener("mousemove",onMouseMove,true);
 		//为本方飞机添加暂停事件
 		selfplan.imagenode.addEventListener("click",pauseGame,true);
-		//为body添加判断本方飞机移出边界事件
-		bodyobj.addEventListener("mousemove",onOutSide,true);
 		//为暂停界面的继续按钮添加暂停事件
 		suspenddiv.getElementsByTagName("button")[0].addEventListener("click",pauseGame,true);
 		//为暂停界面的返回主页按钮添加事件
 		suspenddiv.getElementsByTagName("button")[1].addEventListener("click",restartGame,true);
 	}
 	else if(document.attachEvent){
-		//为本方飞机添加移动
-		mainDiv.attachEvent("onmousemove",onMouseMove);
 		//为本方飞机添加暂停事件
 		selfplan.imagenode.attachEvent("onclick",pauseGame);
-		//为body添加判断本方飞机移出边界事件
-		bodyobj.attachEvent("onmousemove",onOutSide);
 		//为暂停界面的继续按钮添加暂停事件
 		suspenddiv.getElementsByTagName("button")[0].attachEvent("onclick",pauseGame);
 		//为暂停界面的返回主页按钮添加事件
@@ -334,14 +344,8 @@ function start(){
                       selfplan.imagenode.src="image/boom.png";
                       enddiv.style.display="block";
                       planscore.innerHTML=scores;
-                      if(document.removeEventListener){
-                          mainDiv.removeEventListener("mousemove",onMouseMove,true);
-                          bodyobj.removeEventListener("mousemove",onOutSide,true);
-                      }
-                      else if(document.detachEvent){
-                          mainDiv.detachEvent("onmousemove",onMouseMove);
-                          bodyobj.removeEventListener("mousemove",onOutSide,true);
-                      }
+                      removeHandler(mainDiv, moveEventName, onMouseMove);
+                      removeHandler(bodyobj, moveEventName, onOutSide);
                       clearInterval(set);
                   }
                 }
